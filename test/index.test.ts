@@ -1,7 +1,6 @@
 import { test, expect, describe } from "bun:test"
-import type { Config, Message } from "@opencode-ai/plugin"
+import type { Config, Message, Part } from "@opencode-ai/sdk"
 
-type Part = { type: string; text?: string; [key: string]: unknown }
 type TransformedMessage = { info: Message; parts: Part[] }
 type TransformOutput = { messages: TransformedMessage[] }
 
@@ -10,9 +9,9 @@ describe("occontext-thinking-trim", () => {
     ({ experimental: thinkingTrim ? { thinkingTrim } : {} }) as Config
 
   const createMessage = (role: "user" | "assistant", content: string, hasReasoning = false): TransformedMessage => {
-    const parts: Part[] = [{ type: "text", text: content }]
+    const parts: Part[] = [{ type: "text", text: content, id: "text-1", sessionID: "s1", messageID: "m1" } as Part]
     if (hasReasoning && role === "assistant") {
-      parts.unshift({ type: "reasoning", text: "thinking..." })
+      parts.unshift({ type: "reasoning", text: "thinking...", id: "reasoning-1", sessionID: "s1", messageID: "m1" } as Part)
     }
     return { info: { role } as Message, parts }
   }
@@ -127,16 +126,16 @@ describe("occontext-thinking-trim", () => {
         messages: [{
           info: { role: "assistant" } as Message,
           parts: [
-            { type: "reasoning", text: "think" },
-            { type: "text", text: "hello" },
-            { type: "tool-use", name: "test" },
+            { type: "reasoning", text: "think", id: "r1", sessionID: "s1", messageID: "m1" } as Part,
+            { type: "text", text: "hello", id: "t1", sessionID: "s1", messageID: "m1" } as Part,
+            { type: "text", text: "world", id: "t2", sessionID: "s1", messageID: "m1" } as Part,
           ]
         }]
       }
       await hooks["experimental.chat.messages.transform"]?.({}, output)
       
       expect(output.messages[0].parts).toHaveLength(2)
-      expect(output.messages[0].parts.map(p => p.type)).toEqual(["text", "tool-use"])
+      expect(output.messages[0].parts.map(p => p.type)).toEqual(["text", "text"])
     })
   })
 })

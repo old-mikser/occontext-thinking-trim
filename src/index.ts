@@ -1,4 +1,5 @@
-import type { Plugin, Config } from "@opencode-ai/plugin"
+import type { Plugin } from "@opencode-ai/plugin"
+import type { Config } from "@opencode-ai/sdk"
 
 type Part = { type: string; [key: string]: unknown }
 type TransformedMessage = { info: { role: string }; parts: Part[] }
@@ -19,7 +20,7 @@ const plugin: Plugin = async () => {
 
   return {
     config: async (cfg: Config) => {
-      const tc = cfg.experimental?.thinkingTrim
+      const tc = (cfg.experimental as Record<string, unknown>)?.thinkingTrim as ThinkingTrimConfig | undefined
       config = {
         enabled: tc?.enabled ?? DEFAULT_CONFIG.enabled,
         keepTurns: tc?.keepTurns ?? DEFAULT_CONFIG.keepTurns,

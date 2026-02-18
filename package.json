@@ -1,6 +1,6 @@
 {
   "name": "@old-mikser/occontext-thinking-trim",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "OpenCode plugin to trim thinking/reasoning from context to reduce token usage",
   "author": "old-mikser",
   "license": "MIT",

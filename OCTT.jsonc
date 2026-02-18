@@ -1,0 +1,13 @@
+{
+  // Enable or disable the thinking trim plugin
+  // When enabled, reasoning/thinking will be trimmed from context sent to the model
+  // Default: true
+  "enabled": true,
+
+  // Number of recent assistant turns to preserve thinking/reasoning for
+  // 0 = trim all thinking from all messages
+  // 1 = keep thinking in the most recent assistant message
+  // 2 = keep thinking in the last 2 assistant messages, etc.
+  // Default: 0
+  "keepTurns": 0
+}

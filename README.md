@@ -12,31 +12,29 @@ This plugin removes reasoning from the context sent to the model, while keeping 
 
 ## Installation
 
-1. Clone or copy this directory to your OpenCode plugins folder:
-   ```bash
-   mkdir -p ~/.config/opencode/plugins
-   cp -r . ~/.config/opencode/plugins/occontext-thinking-trim
-   ```
-
-2. Add to your `opencode.json`:
-   ```json
-   {
-     "plugins": ["occontext-thinking-trim"]
-   }
-   ```
-
-## Configuration
-
 Add to your `opencode.json`:
 
 ```json
 {
-  "experimental": {
-    "thinkingTrim": {
-      "enabled": true,
-      "keepTurns": 0
-    }
-  }
+  "plugins": ["github:old-mikser/occontext-thinking-trim"]
+}
+```
+
+On first run, the plugin creates `~/.config/opencode/OCTT.jsonc` with default settings.
+
+## Configuration
+
+Edit `~/.config/opencode/OCTT.jsonc`:
+
+```jsonc
+{
+  // Enable or disable thinking trim
+  "enabled": true,
+  
+  // Number of recent turns to preserve thinking
+  // 0 = trim all thinking from context
+  // 2 = keep thinking in last 2 assistant messages
+  "keepTurns": 0
 }
 ```
 

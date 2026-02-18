@@ -12,13 +12,14 @@ interface ThinkingTrimConfig {
   keepTurns: number
 }
 
+const CONFIG_DIR = join(homedir(), ".config", "opencode")
+const CONFIG_FILE = join(CONFIG_DIR, "OCTT.jsonc")
+const DEBUG_LOG = join(CONFIG_DIR, "OCTT-debug.log")
+
 const DEFAULT_CONFIG: ThinkingTrimConfig = {
   enabled: true,
   keepTurns: 0,
 }
-
-const CONFIG_DIR = join(homedir(), ".config", "opencode")
-const CONFIG_FILE = join(CONFIG_DIR, "OCTT.jsonc")
 
 function stripJsonComments(jsonc: string): string {
   return jsonc
@@ -64,24 +65,67 @@ async function createDefaultConfig(): Promise<void> {
   await Bun.write(CONFIG_FILE, defaultContent)
 }
 
+async function debugLog(message: string): Promise<void> {
+  const timestamp = new Date().toISOString()
+  const logLine = `[${timestamp}] ${message}\n`
+  const file = Bun.file(DEBUG_LOG)
+  const existing = (await file.exists()) ? await file.text() : ""
+  await Bun.write(DEBUG_LOG, existing + logLine)
+}
+
 const plugin: Plugin = async () => {
   let config: ThinkingTrimConfig = await loadConfig()
 
+  const log = Bun.file(DEBUG_LOG)
+  if (await log.exists()) {
+    await Bun.write(DEBUG_LOG, "")
+  }
+
+  await debugLog(`Plugin loaded. Config: ${JSON.stringify(config)}`)
+
   return {
     "experimental.chat.messages.transform": async (_, output: TransformOutput) => {
-      if (!config.enabled) return
+      await debugLog(`Hook called. Messages count: ${output.messages.length}`)
+
+      if (!config.enabled) {
+        await debugLog("Plugin disabled, skipping")
+        return
+      }
+
+      let totalReasoningParts = 0
+      let trimmedReasoningParts = 0
+
+      for (let idx = 0; idx < output.messages.length; idx++) {
+        const msg = output.messages[idx]
+        const reasoningCount = msg.parts.filter((p) => p.type === "reasoning").length
+        totalReasoningParts += reasoningCount
+        if (reasoningCount > 0) {
+          await debugLog(`Message ${idx} (${msg.info.role}): ${reasoningCount} reasoning parts`)
+        }
+      }
 
       const assistantMessages = output.messages
         .map((msg, idx) => ({ msg, idx }))
         .filter(({ msg }) => msg.info.role === "assistant")
         .reverse()
 
-      assistantMessages.forEach(({ msg, idx }, reverseIdx) => {
-        const shouldKeepReasoning = reverseIdx < config.keepTurns
+      await debugLog(`Found ${assistantMessages.length} assistant messages`)
+
+      for (let ri = 0; ri < assistantMessages.length; ri++) {
+        const { msg, idx } = assistantMessages[ri]
+        const shouldKeepReasoning = ri < config.keepTurns
+        const beforeCount = msg.parts.filter((p) => p.type === "reasoning").length
         if (!shouldKeepReasoning) {
           msg.parts = msg.parts.filter((part) => part.type !== "reasoning")
         }
-      })
+        const afterCount = msg.parts.filter((p) => p.type === "reasoning").length
+        trimmedReasoningParts += beforeCount - afterCount
+        if (beforeCount > 0) {
+          await debugLog(`Assistant msg ${idx}: ${beforeCount} -> ${afterCount} reasoning (reverseIdx=${ri}, keepTurns=${config.keepTurns})`)
+        }
+      }
+
+      await debugLog(`Trimmed ${trimmedReasoningParts}/${totalReasoningParts} reasoning parts`)
     },
   }
 }

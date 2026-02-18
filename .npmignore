@@ -1,0 +1,7 @@
+docs/
+test/
+*.test.ts
+bun.lockb
+.gitignore
+tsconfig.json
+AGENTS.md

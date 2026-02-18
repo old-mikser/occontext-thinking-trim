@@ -16,7 +16,7 @@ Add to your `opencode.json`:
 
 ```json
 {
-  "plugins": ["github:old-mikser/occontext-thinking-trim"]
+  "plugins": ["@old-mikser/occontext-thinking-trim"]
 }
 ```
 
